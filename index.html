@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prestige Carrier Matcher</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: navy hero with lane-marking stripe, then a single working column. Amber is the only accent, used for the stripe, premium bars and "quote first". */
+:root{--bg:#eef0f3;--card:#ffffff;--ink:#14202e;--mute:#5a6675;--line:#d8dde4;--brand:#14274e;--headbg:#14274e;--btn:#14274e;--btnsec:#14274e;--amber:#e0a526;--amberbg:#fdf3d8;--ok:#17703f;--okbg:#e1f4e8;--warn:#9a5b00;--warnbg:#fff0d1;--bad:#b0241a;--badbg:#fde3e0;--acc:#1f5fa8;--shadow:0 1px 2px rgba(20,32,46,.06),0 4px 14px rgba(20,32,46,.05)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e131a;--card:#161d27;--ink:#e9edf2;--mute:#9ba7b6;--line:#27313e;--brand:#8db0f0;--headbg:#0b1a36;--btn:#2d4f8a;--btnsec:#e9edf2;--amber:#f0b93d;--amberbg:#3a2f10;--ok:#5bd08f;--okbg:#12301f;--warn:#f0b24a;--warnbg:#3a2c10;--bad:#ff8a7d;--badbg:#3b1815;--acc:#7db2f0;--shadow:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e131a;--card:#161d27;--ink:#e9edf2;--mute:#9ba7b6;--line:#27313e;--brand:#8db0f0;--headbg:#0b1a36;--btn:#2d4f8a;--btnsec:#e9edf2;--amber:#f0b93d;--amberbg:#3a2f10;--ok:#5bd08f;--okbg:#12301f;--warn:#f0b24a;--warnbg:#3a2c10;--bad:#ff8a7d;--badbg:#3b1815;--acc:#7db2f0;--shadow:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Barlow,system-ui,Segoe UI,Arial,sans-serif}
+h1,h2,h3,.cond{font-family:"Barlow Condensed","Arial Narrow",system-ui,sans-serif}
+.hero{position:relative;overflow:hidden;background:var(--headbg);color:#fff;padding-block:26px 34px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.hero:after{content:"";position:absolute;left:0;right:0;bottom:12px;height:4px;background:repeating-linear-gradient(90deg,var(--amber) 0 38px,transparent 38px 70px);opacity:.9}
+.hero-in{max-width:1180px;margin:0 auto;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap;position:relative}
+.brand{display:flex;gap:14px;align-items:center;min-width:0}
+.brand svg.shield{flex:none}
+.hero h1{margin:0;font-size:38px;line-height:1;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+.hero p{margin:6px 0 0;opacity:.82;font-size:15px;max-width:520px}
+.truck{position:absolute;right:-10px;bottom:6px;width:330px;opacity:.12;pointer-events:none}
+.steps{display:flex;gap:10px;flex-wrap:wrap;position:relative}
+.step{display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);border-radius:99px;padding:5px 14px 5px 6px;font-size:13px}
+.step b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--amber);color:#14202e;font-family:"Barlow Condensed",sans-serif;font-size:14px}
+main{max-width:1180px;margin:0 auto;padding-block:18px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 10px;font-size:22px;font-weight:600;letter-spacing:.01em}
+#drop{display:flex;flex-direction:column;align-items:center;gap:6px;border:2px dashed var(--amber);border-radius:12px;padding:30px 16px;text-align:center;color:var(--mute);cursor:pointer;background:var(--bg);transition:background .15s,border-color .15s}
+#drop:hover,#drop.over{background:var(--amberbg);border-style:solid}
+#drop .big{font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:600;color:var(--ink)}
+#drop svg{color:var(--amber)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+label{display:block;font-size:12px;font-weight:500;color:var(--mute);margin-bottom:3px;letter-spacing:.02em}
+input,select,textarea{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus,textarea:focus,.rich:focus{outline:2px solid var(--acc);outline-offset:1px}
+textarea{min-height:70px}
+button{background:var(--btn);color:#fff;border:0;border-radius:8px;padding:8px 16px;cursor:pointer;font:inherit;font-weight:600}
+button:hover{filter:brightness(1.12)}
+button.sec{background:transparent;color:var(--btnsec);border:1px solid var(--line);font-weight:500}
+button.sec:hover{background:var(--bg);filter:none}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chk label{display:inline-flex;gap:6px;align-items:center;color:var(--ink);font-size:14px;margin-right:14px}
+.chk input{width:auto}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600}
+.b-ok{background:var(--okbg);color:var(--ok)}.b-rev{background:var(--warnbg);color:var(--warn)}.b-no{background:var(--badbg);color:var(--bad)}
+.tag{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:0 6px;font-size:11px;margin:1px 4px 1px 0;color:var(--mute)}
+.why{font-size:12px;color:var(--mute);margin-top:3px}
+a{color:var(--acc)}
+.mga{font-size:12px;margin-top:2px}
+small{color:var(--mute)}
+.hide{display:none}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.tile .tn{font-family:"Barlow Condensed",sans-serif;font-size:34px;font-weight:700;line-height:1}
+.tile .tl{font-size:12px;color:var(--mute);margin-top:3px}.tile .ts{font-size:12px;color:var(--mute);margin-top:2px;overflow-wrap:anywhere}
+.tile.ok .tn{color:var(--ok)}.tile.warn .tn{color:var(--warn)}.tile.bad .tn{color:var(--bad)}
+.tile.low{background:var(--amberbg);border-color:var(--amber)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
+.item{position:relative;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:var(--card);box-shadow:var(--shadow)}
+.item.top5{border-color:var(--amber)}
+.item.ine{opacity:.62}
+.quick{position:absolute;top:-9px;left:56px;background:var(--amber);color:#14202e;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:1px 9px;border-radius:99px}
+.ihead{display:grid;grid-template-columns:22px 34px minmax(170px,1.5fr) minmax(150px,1.1fr) 132px minmax(110px,.7fr) auto;gap:14px;align-items:center;padding:14px 16px}
+.pick{margin:0}.pick input{width:auto}
+.rank{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--bg);border:1px solid var(--line);font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:15px;color:var(--mute)}
+.top5 .rank{background:var(--amber);border-color:var(--amber);color:#14202e}
+.iname b{font-family:"Barlow Condensed",sans-serif;font-size:21px;font-weight:600;line-height:1.1;letter-spacing:.01em}
+.iname .sub{margin-top:3px}.via{font-size:12px;color:var(--mute)}
+.ifit .note{font-size:12px;color:var(--mute);margin-top:4px}.ifit .note.f{color:var(--bad)}
+.iprem .pnum{font-family:"Barlow Condensed",sans-serif;font-size:30px;font-weight:700;line-height:1}
+.pbar{height:5px;border-radius:3px;background:var(--line);margin:5px 0 3px;overflow:hidden}.pbar i{display:block;height:100%;background:var(--amber);border-radius:3px}
+.iprem small{display:block;font-size:11px}
+.chip{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:12px;margin:1px 3px 1px 0;font-weight:500}
+.iact{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer;text-decoration:none;background:transparent;color:var(--ink);white-space:nowrap;font-weight:500}
+.btn:hover{background:var(--bg);filter:none}
+.btn.ora{background:var(--okbg);color:var(--ok);border-color:var(--ok);font-weight:600}
+.idet{border-top:1px solid var(--line);padding:14px 18px;background:var(--bg);border-radius:0 0 12px 12px}
+.dcols{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.idet h4{margin:10px 0 5px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);font-weight:600}
+.idet .f{color:var(--bad)}.idet .w{color:var(--warn)}.idet .okt{color:var(--ok)}
+.rich{border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:12px 14px;min-height:300px;max-height:520px;overflow:auto;font-family:Calibri,Arial,sans-serif;font-size:14px;line-height:1.5}
+.coach{background:var(--warnbg);color:var(--warn);border-radius:8px;padding:7px 11px;font-size:13px}
+.gt td{padding:2px 10px 2px 0;border:0;font-size:13px;vertical-align:top}.gt td:first-child{color:var(--mute);white-space:nowrap}
+.cc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:7px;font-size:13px;overflow-wrap:anywhere}
+.foot{text-align:center;color:var(--mute);font-size:12px;margin:18px 0 6px}
+@media (max-width:980px){.ihead{grid-template-columns:22px 34px 1fr}.ihead>div:nth-child(n+4){grid-column:1/-1}.iact{justify-content:flex-start}.dcols{grid-template-columns:1fr}.truck{display:none}.hero h1{font-size:30px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+#gate{min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--headbg)}
+#gate form{width:min(380px,100%);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px 26px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;box-shadow:var(--shadow)}
+#gate h1{margin:4px 0 0;font-size:30px;text-transform:uppercase;letter-spacing:.03em}
+#gate p{margin:0 0 6px;color:var(--mute)}
+#gate input{text-align:center;font-size:18px;letter-spacing:.12em}
+#gate button{width:100%}
+#gateMsg{min-height:20px;font-size:13px;color:var(--bad)}
+</style>
+</head>
+<body>
+<div id="gate"><form id="gateForm" autocomplete="off"><svg width="46" height="52" viewBox="0 0 46 52" aria-hidden="true"><path d="M23 2 4 9v16c0 12 8 20 19 25 11-5 19-13 19-25V9z" fill="#e0a526"/><path d="M23 9 11 13.5V25c0 8 5.5 14 12 17.5C29.500 39 35 33 35 25V13.500z" fill="#14274e"/><path d="m17 25 4.500 4.500L30 20" stroke="#e0a526" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><h1>Carrier Matcher</h1><p>Enter your access code to open the tool.</p><input id="gatePw" type="password" placeholder="Access code" autocomplete="off" spellcheck="false" autofocus><button type="submit" id="gateBtn">Unlock</button><div id="gateMsg" role="status"></div></form></div>
+<div id="app" class="hide">
+<header class="hero">
+  <div class="hero-in">
+    <div class="brand">
+      <svg class="shield" width="46" height="52" viewBox="0 0 46 52" aria-hidden="true"><path d="M23 2 4 9v16c0 12 8 20 19 25 11-5 19-13 19-25V9z" fill="#e0a526"/><path d="M23 9 11 13.5V25c0 8 5.5 14 12 17.5C29.500 39 35 33 35 25V13.500z" fill="#14274e"/><path d="m17 25 4.500 4.500L30 20" stroke="#e0a526" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div><h1>Carrier Matcher</h1><p>Upload an intake form. Get every eligible carrier and MGA with contacts, lowest minimum premium first.</p></div>
+    </div>
+    <div class="steps"><span class="step"><b>1</b>Upload form</span><span class="step"><b>2</b>Check profile</span><span class="step"><b>3</b>Pick carriers, send email</span></div>
+  </div>
+</header>
+<main>
+
+<div class="card">
+  <div id="drop">
+    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L7.500 8.500M12 4l4.500 4.500"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+    <span class="big">Drop the intake form PDF here</span>
+    <span>or click to choose. Works with the old 2-page form and Kathy's new 4-page form.</span>
+    <input type="file" id="file" accept="application/pdf" class="hide">
+  </div>
+  <div class="row" style="margin-top:10px"><div id="msg" class="why" style="flex:1"></div><button class="sec" id="manual">Enter details by hand</button></div>
+</div>
+
+<div class="card hide" id="profileCard">
+  <div class="row" style="justify-content:space-between"><h2>Account profile <small style="font-size:13px;font-family:Barlow,sans-serif">check and correct anything wrong</small></h2><span class="row"><button id="run">Match carriers</button></span></div>
+  <div class="grid" id="pf"></div>
+  <div class="chk" style="margin-top:12px"><b style="font-size:12px;color:var(--mute);margin-right:8px">COVERAGE NEEDED</b>
+    <label><input type="checkbox" id="nAL" checked> Auto Liability</label>
+    <label><input type="checkbox" id="nPD"> Physical Damage</label>
+    <label><input type="checkbox" id="nCargo"> Cargo</label>
+    <label><input type="checkbox" id="nGL"> General Liability</label>
+  </div>
+  <div style="margin-top:12px"><label>Drivers and issues (one per line: name | age | years CDL | violations)</label><textarea id="drivers"></textarea></div>
+  <div style="margin-top:8px"><label>Vehicles (one per line: type | year | value)</label><textarea id="vehicles"></textarea></div>
+</div>
+
+<div class="card hide" id="results">
+  <h2 id="summary"></h2>
+  <div class="tiles" id="tiles"></div>
+  <div class="bar">
+    <label style="margin:0;display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="showNo" style="width:auto"> Show not eligible</label>
+    <span class="row">
+      <button class="sec" id="selTop">Select all eligible</button>
+      <button class="sec" id="copyEmails">Copy selected emails</button>
+      <button class="sec" id="copyList">Copy list</button>
+      <button id="mkEmail">Build submission email</button>
+    </span>
+  </div>
+  <div id="list"></div>
+</div>
+
+<div class="card hide" id="emailCard">
+  <h2>Submission email <small style="font-size:13px;font-family:Barlow,sans-serif">attach the intake form, MVRs, loss runs and CAB</small></h2>
+  <label>Subject</label><input id="emSub">
+  <label style="margin-top:10px">Body</label><div id="emBody" class="rich" contenteditable="true" spellcheck="false"></div>
+  <div class="row" style="margin-top:10px"><button id="cpBody">Copy body</button><button class="sec" id="cpSub">Copy subject</button></div>
+</div>
+<p class="foot">Carrier data from Prestige Matrix as of 10/21/2026. Minimum premiums and guidelines are guides, not quotes. Confirm with the carrier or MGA before relying on them.</p>
+</main>
+</div>
+
+<script src="pdf.min.js"></script>
+<script src="pdf.worker.min.js"></script>
+<script src="data.enc.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const YEAR=new Date().getFullYear();
+const STATES="AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY".split(" ");
+let result=[], profile={}, RAWACC=null;
+try{pdfjsLib.GlobalWorkerOptions.workerSrc="pdf.worker.min.js";}catch(e){}
+
+/* ---------- PDF reading ---------- */
+async function readFields(buf){
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise, f={};
+  for(let i=1;i<=pdf.numPages;i++){
+    const an=await (await pdf.getPage(i)).getAnnotations();
+    for(const a of an){
+      if(!a.fieldName) continue;
+      let v=a.fieldValue; if(Array.isArray(v)) v=v.join(", ");
+      if(a.radioButton||a.checkBox){ if(v&&v!=="Off"&&v!==false) f[a.fieldName]=String(v); continue; }
+      if(v!==undefined&&v!==null&&String(v).trim()!=="") f[a.fieldName]=String(v).trim();
+    }
+  }
+  return f;
+}
+const num=s=>{const m=String(s||"").replace(/,/g,"").match(/\d+(\.\d+)?/);return m?parseFloat(m[0]):null;};
+function stateOf(s){const m=String(s||"").match(/\b([A-Z]{2})\b(?=[\s,]*\d{5}|\s*$)/);return m&&STATES.includes(m[1])?m[1]:"";}
+function ageFrom(dob){const m=String(dob||"").match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(!m)return null;const b=new Date(+m[3],+m[1]-1,+m[2]),n=new Date();let a=n.getFullYear()-b.getFullYear();if(n<new Date(n.getFullYear(),b.getMonth(),b.getDate()))a--;return a;}
+function toProfile(f){
+  const nw=("insured_name" in f)||("vehicle_type_1" in f)||("driver_name_1" in f)&&("units_per_client" in f);
+  const g=(a,b)=>f[nw?a:b]||"";
+  const p={};
+  p.name=g("insured_name","company_name");
+  p.garageState=stateOf(g("garaging_city_state_zip","city_state_zip"))||f.state||f.primary_region||"";
+  {const raw=g("year_established","year_business_established");const m=String(raw).match(/(19|20)\d{2}(?!.*(19|20)\d{2})/);p.est=m?+m[0]:null;}
+  p.yrs=p.est?YEAR-p.est:"";
+  p.eff=g("effective_date","effective_date");
+  p.target=num(g("target_premium","target_premium"))||"";
+  p.radius=num(nw?f.radius:f["Radius of Operation"])||"";
+  p.ownerDriver=(g("owner_is_driver","is_owner_driver")||"").toLowerCase().startsWith("y");
+  p.dot=g("dot_number","us_dot");
+  const veh=[],drv=[],com=[];
+  for(let i=1;i<=10;i++){
+    const t=nw?f["vehicle_type_"+i]:f["vehicle_"+i+"_type"],y=nw?f["vehicle_year_"+i]:f["vehicle_"+i+"_year"],v=nw?f["vehicle_value_"+i]:f["vehicle_"+i+"_value"];
+    if(t||y) veh.push(`${t||""} | ${y||""} | ${v||""}`);
+    const n=nw?f["driver_name_"+i]:f["driver_"+i+"_name"];
+    if(n){
+      const dob=nw?f["driver_dob_"+i]:f["driver_"+i+"_dob"];
+      let ex=nw?f["driver_years_exp_"+i]:f["driver_"+i+"_years_exp"];
+      const cy=num(nw?f["driver_cdl_year_"+i]:f["driver_"+i+"_cdl_year"]);
+      if(!ex&&cy) ex=YEAR-cy;
+      const vi=nw?f["driver_tickets_accidents_"+i]:f["driver_"+i+"_violations"];
+      drv.push(`${n} | ${ageFrom(dob)??""} | ${num(ex)??""} | ${vi||""}`);
+    }
+    const c=nw?f["cargo_commodity_"+i]:f["cargo_"+i+"_commodity"]; if(c) com.push(c);
+  }
+  p.vehicles=veh.join("\n"); p.drivers=drv.join("\n"); p.commodities=com.join(", ");
+  p.nPD=veh.some(l=>num(l.split("|")[2])>0)||(nw&&f.requested_physical_damage==="Yes");
+  p.nCargo=nw?f.requested_cargo==="Yes":!!(f["Cargo Limit"]&&num(f["Cargo Limit"]));
+  p.nGL=nw?f.requested_general_liability==="Yes":!!(f.general_liability&&!/^n\/?a$/i.test(f.general_liability));
+  p.nAL=nw?f.requested_auto_liability!=="No":!!(f["Primary Liability"]&&num(f["Primary Liability"]));
+  return p;
+}
+function showProfile(p){
+  const fields=[["name","Insured"],["garageState","Garaging state"],["yrs","Years in business"],["eff","Effective date"],["target","Target premium ($)"],["radius","Radius (miles)"],["dot","USDOT"],["commodities","Commodities"]];
+  $("pf").innerHTML=fields.map(([k,l])=>`<div><label>${l}</label><input id="p_${k}" value="${String(p[k]??"").replace(/"/g,"&quot;")}"></div>`).join("");
+  $("drivers").value=p.drivers; $("vehicles").value=p.vehicles;
+  $("nAL").checked=p.nAL;$("nPD").checked=p.nPD;$("nCargo").checked=p.nCargo;$("nGL").checked=p.nGL;
+  $("profileCard").classList.remove("hide");
+}
+function readProfile(){
+  const g=k=>$("p_"+k).value.trim();
+  const drivers=$("drivers").value.split("\n").filter(x=>x.trim()).map(l=>{const [n,a,e,v]=l.split("|").map(s=>s.trim());return{name:n,age:num(a),exp:num(e),viol:v||""};});
+  const vehicles=$("vehicles").value.split("\n").filter(x=>x.trim()).map(l=>{const [t,y,v]=l.split("|").map(s=>s.trim());return{type:t||"",year:num(y),value:num(v)};});
+  return{name:g("name"),state:g("garageState").toUpperCase().slice(0,2),yrs:g("yrs")===""?null:num(g("yrs")),eff:g("eff"),target:num(g("target")),radius:num(g("radius")),dot:g("dot"),commodities:g("commodities"),drivers,vehicles,
+    need:{AL:$("nAL").checked,PD:$("nPD").checked,Cargo:$("nCargo").checked,GL:$("nGL").checked}};
+}
+
+/* ---------- matching ---------- */
+const vkind=t=>{t=(t||"").toLowerCase();if(/tractor|semi|truck tractor/.test(t))return"Tractor";if(/box|straight/.test(t))return"Box Truck";if(/hot|pickup|pick-up/.test(t))return"Hot Shot";if(/dump/.test(t))return"Dump Truck";if(/van|sprinter/.test(t))return"Cargo Van";if(/trailer|reefer/.test(t))return"Trailer";return"";};
+const cats=[["Refrigerated",/reefer|refriger|frozen|produce|meat|dairy|fresh|beverage/i],["Building Materials",/building|lumber|brick|cement|drywall|steel|roof/i],["Auto Haulers",/auto hauler|car hauler|vehicles/i],["Machinery",/machin|equipment/i],["Dirt Sand & Gravel",/dirt|sand|gravel|aggregate|dump/i],["HouseHold Goods",/household|moving/i],["Agricultural",/agri|grain|hay|farm|feed/i],["Heavy Equipment",/heavy equip/i],["General Freight",/general|dry|retail|merchandise|goods|freight|packag|food|grocer/i]];
+function match(c,P){
+  const fail=[],warn=[];
+  const power=P.vehicles.filter(v=>/tractor|truck|van|pickup|hot|sprinter|straight|dump|box/i.test(v.type)&&!/trailer/i.test(v.type));
+  const units=power.length||P.vehicles.filter(v=>!/trailer/i.test(v.type)).length;
+  // coverage
+  const cov=c.cov||"";
+  if(P.need.AL&&!/AL/.test(cov)) fail.push("No Auto Liability");
+  if(P.need.PD&&!/PD/.test(cov)) warn.push("No PD");
+  if(P.need.Cargo&&!/Cargo/.test(cov)) warn.push("No Cargo");
+  if(P.need.GL&&!/GL/.test(cov)) warn.push("No GL");
+  // states
+  const st=(c.states||"").split(/[,\s]+/).filter(x=>/^[A-Z]{2}$/.test(x));
+  if(P.state){ if(st.length){ if(!st.includes(P.state)) fail.push("Does not write "+P.state);} else warn.push("States not listed"); }
+  else warn.push("Garaging state missing");
+  // years
+  let yr=num(c.years); if(c.yrsState){ yr=(P.state&&c.yrsState[P.state])?num(c.yrsState[P.state]):0; } if(yr!==null&&P.yrs!==null){ if(P.yrs<yr) fail.push(`Needs ${yr}+ years in business`);} else if(yr!==null&&yr>0) warn.push(`Needs ${yr}+ yrs (unknown)`);
+  // fleet
+  const fm=String(c.fleet||"");const fr=fm.match(/(\d+)\s*-\s*(\d+)/);
+  if(fr){ if(units<+fr[1]||units>+fr[2]) fail.push(`Fleet ${fr[1]}-${fr[2]} units`);} else { const fn=num(fm); if(fn!==null&&units&&units<fn) fail.push(`Needs ${fn}+ units`); }
+  // CDL exp
+  const ce=num(c.cdl); const ex=P.drivers.map(d=>d.exp).filter(x=>x!==null);
+  if(ce&&ex.length){ if(Math.min(...ex)<ce) fail.push(`Needs ${ce}+ yrs CDL (lowest ${Math.min(...ex)})`);} else if(ce&&!ex.length) warn.push("Driver experience unknown");
+  // age
+  const ag=num(c.age); const ages=P.drivers.map(d=>d.age).filter(x=>x!==null);
+  if(ag&&ages.length&&Math.min(...ages)<ag) fail.push(`Driver age ${ag}+ (youngest ${Math.min(...ages)})`);
+  // vehicle age
+  const va=num(c.vage); const yrsOld=power.map(v=>v.year?YEAR-v.year:null).filter(x=>x!==null);
+  if(va&&yrsOld.length&&Math.max(...yrsOld)>va) fail.push(`Vehicles max ${va} yrs (oldest ${Math.max(...yrsOld)})`);
+  // vehicle types
+  if(c.veh){ const bad=[...new Set(power.map(v=>vkind(v.type)).filter(k=>k&&k!=="Trailer"&&!c.veh.includes(k)))]; if(bad.length) fail.push("Does not accept "+bad.join(", ")); }
+  // cargo
+  if(c.cargo&&P.commodities){ const wanted=cats.filter(([n,re])=>re.test(P.commodities)).map(x=>x[0]);
+    const miss=wanted.filter(n=>!c.cargo.toLowerCase().includes(n.toLowerCase().split(" ")[0])); if(wanted.length&&miss.length===wanted.length) warn.push("Check commodities: "+miss.join(", ")); }
+  // extra Matrix rules (per-cargo / per-vehicle years, owner rules, market coaching)
+  const kinds=[...new Set(power.map(v=>vkind(v.type)).filter(Boolean))];
+  for(const [vt,y] of Object.entries(c.vehYIB||{})){ const yy=num(y); if(yy&&P.yrs!==null&&P.yrs<yy&&kinds.some(k=>k.toLowerCase()===vt.toLowerCase())) fail.push(`${vt} needs ${yy}+ yrs in business`); }
+  for(const [ct,y] of Object.entries(c.cargoYIB||{})){ const yy=num(y); if(yy&&P.yrs!==null&&P.yrs<yy&&new RegExp(ct.split(/[ \/&]+/)[0],"i").test(P.commodities||"")) fail.push(`${ct} needs ${yy}+ yrs in business`); }
+  const od=P.drivers.length&&(P.ownerDriver===undefined?true:P.ownerDriver);
+  if(c.odYIB&&P.yrs!==null&&P.yrs<num(c.odYIB)) warn.push(`Owner-driver accounts need ${num(c.odYIB)}+ yrs in business`);
+  if(c.ownerMustDrive) warn.push("Owner must be a driver");
+  if(c.cdlReq&&P.drivers.some(d=>/no cdl|non-?cdl/i.test(d.viol||""))) warn.push("CDL required");
+  const co=c.coach||"";
+  if(co){
+    if(/no hot ?shot/i.test(co)&&kinds.includes("Hot Shot")) fail.push("Coaching: no hotshots");
+    if(/no dirt, ?sand/i.test(co)&&/dirt|sand|gravel|aggregate/i.test(P.commodities||"")) fail.push("Coaching: no dirt, sand and gravel");
+    if(/dump operations are not allowed in florida/i.test(co)&&P.state==="FL"&&kinds.includes("Dump Truck")) fail.push("Coaching: no dump operations in FL");
+    const bt=co.match(/no box trucks in ([A-Z, ]+)/i); if(bt&&kinds.includes("Box Truck")&&bt[1].split(/[ ,]+/).includes(P.state)) fail.push(`Coaching: no box trucks in ${P.state}`);
+    const gw=co.match(/does not offer auto hauler or hotshot operations in ([A-Za-z ]+)/i); if(gw&&P.state==="DE"&&(kinds.includes("Hot Shot")||/auto hauler/i.test(P.commodities||""))) fail.push("Coaching: no auto hauler/hotshot in DE");
+    if(/excluded territories/i.test(co)&&P.state==="FL") warn.push("Excluded FL counties: Broward, Dade, Palm Beach, Monroe, Collier and more");
+  }
+  // violations
+  const vio=P.drivers.filter(d=>/suspen|dui|dwi|reckless|revok|hit.?and.?run/i.test(d.viol));
+  if(vio.length) warn.push("Serious driver issue: "+vio.map(d=>d.name).join(", "));
+  // premium vs target
+  if(P.target&&c.premNum&&c.premNum>P.target) warn.push(`Min premium above target $${P.target.toLocaleString()}`);
+  if(!c.premNum) warn.push("Min premium unknown");
+  // carrier-specific rules
+  const n=c.name.toLowerCase();
+  if(n.startsWith("evolum")){
+    if(P.need.PD||P.need.Cargo) warn.push("Evolum writes AL only");
+    if(vio.length) fail.push("Evolum declines suspensions/DUI/reckless");
+    if(P.state==="FL"&&(P.yrs!==null&&P.yrs<3)) fail.push("Evolum FL needs 3+ yrs coverage");
+    if(ages.length&&(Math.min(...ages)<23||Math.max(...ages)>69)) fail.push("Evolum drivers 23-69");
+  }
+  if(n.startsWith("corgi")){
+    if(power.some(v=>/hot|dump/i.test(v.type))||/auto hauler|dump|hot ?shot/i.test(P.commodities)) fail.push("Corgi: no hotshot/dump/auto hauler");
+    if(P.need.AL&&P.need.PD===false&&!P.need.Cargo) {}
+  }
+  const status=fail.length?"no":(warn.length?"rev":"ok");
+  return{c,fail,warn,status};
+}
+function runMatch(){
+  const P=profile=readProfile();
+  result=CARRIERS.map(c=>match(c,P));
+  const rank={ok:0,rev:1,no:2};
+  result.sort((a,b)=>rank[a.status]-rank[b.status]||((a.c.premNum??1e12)-(b.c.premNum??1e12)));
+  // order eligible+review together by premium
+  const live=result.filter(r=>r.status!=="no").sort((a,b)=>(a.c.premNum??1e12)-(b.c.premNum??1e12));
+  const dead=result.filter(r=>r.status==="no").sort((a,b)=>(a.c.premNum??1e12)-(b.c.premNum??1e12));
+  result=live.concat(dead);
+  render();
+}
+const mail=e=>(e||"").split(/[,;\s]+/).filter(x=>/@/.test(x));
+const url=u=>u?(/^https?:/.test(u)?u:"https://"+u):"";
+function contactHtml(o){
+  if(!o) return "";
+  const em=mail(o.emails).map(e=>`<a href="mailto:${e}">${e}</a>`).join(", ");
+  return [o.uw?`<small>${o.uw}</small>`:"",o.phone&&!/555-\d{4}/.test(o.phone)?o.phone:(o.phone?o.phone+" <small>(placeholder?)</small>":""),em].filter(Boolean).join(" · ");
+}
+const esc=s=>String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const chips=cov=>(cov||"").split("/").filter(Boolean).map(x=>`<span class="chip">${x}</span>`).join("");
+function contactCard(o,title){
+  const em=mail(o.emails), ph=o.phone&&!/555-\d{4}/.test(o.phone)?o.phone:"";
+  if(!em.length&&!ph&&!o.web&&!o.uw) return `<div class="cc"><b>${esc(title)}</b><div class="why">No contact on file</div></div>`;
+  return `<div class="cc"><b>${esc(title)}</b>${o.uw?`<div class="why">${esc(o.uw)}</div>`:""}
+    ${ph?`<div>📞 ${esc(ph)}</div>`:(o.phone?`<div class="why">Phone ${esc(o.phone)} looks like a placeholder</div>`:"")}
+    ${em.map(e=>`<div>✉ <a href="mailto:${e}">${e}</a></div>`).join("")}
+    ${o.web?`<div>🌐 <a href="${url(o.web)}" target="_blank" rel="noopener">${esc(o.web.replace(/^https?:\/\//,"").slice(0,40))}</a></div>`:""}
+    ${o.notes?`<div class="why">${esc(o.notes)}</div>`:""}</div>`;
+}
+function render(){
+  const showNo=$("showNo").checked;
+  const live=result.filter(r=>r.status!=="no");
+  const ok=result.filter(r=>r.status==="ok").length, rev=result.filter(r=>r.status==="rev").length, no=result.length-live.length;
+  const tile=(n,l,k)=>`<div class="tile ${k}"><div class="tn">${n}</div><div class="tl">${l}</div></div>`;
+  const low=live.find(r=>r.c.premNum);
+  $("summary").textContent=`${live.length} carriers can be tried`;
+  $("tiles").innerHTML=tile(live.length,"Can be tried","")+tile(ok,"Clean fit","ok")+tile(rev,"Need review","warn")+tile(no,"Not eligible","bad")+(low?`<div class="tile low"><div class="tn">${esc(low.c.prem.split(" (")[0])}</div><div class="tl">Lowest minimum</div><div class="ts">${esc(low.c.name)}</div></div>`:"");
+  const maxP=Math.max(...live.map(r=>r.c.premNum||0),1);
+  let i=0,h="";
+  for(const r of result){
+    if(r.status==="no"&&!showNo) continue;
+    const c=r.c; i++;
+    const idx=result.indexOf(r), ne=emailsFor([r]).length, top=r.status!=="no"&&i<=5;
+    const via=c.mgas.map(m=>m.name.replace(/\s*\((Online Rater|Direct)\)/i,"").replace(/ (Inc|Insurance Company|Managers Inc|General Agency)\b.*/i,"")).slice(0,3);
+    const note=r.status==="no"?r.fail[0]+(r.fail.length>1?` (+${r.fail.length-1})`:""):(r.warn.length?r.warn.length+" note"+(r.warn.length>1?"s":"")+" - see details":"No issues found");
+    const g=[["Years in business",c.years],["Min fleet",c.fleet],["CDL experience",c.cdl],["Driver age",c.age],["Max vehicle age",c.vage],["Vehicle types",c.veh],["Radius",c.radius],["Cargo types",c.cargo],["States",c.states],["Min premium",c.prem],["MVR",c.mvr],["Out-of-state drivers",c.oos],["Owner-operators",c.oop],["Payment options",c.pay],["Filings",c.filings],["Endorsements",c.endors],["Territory limits",c.terr],["Driver scheduling",c.sched]].filter(x=>x[1]);
+    const prem=(c.prem&&c.prem!=="0")?c.prem:"n/a", pct=c.premNum?Math.max(6,Math.round(c.premNum/maxP*100)):0;
+    const pm=prem.match(/^\s*(\$[\d,]+(?:\s*-\s*\$?[\d,]+)?)\s*(.*)$/), pbig=pm?pm[1]:prem, prest=pm?pm[2].replace(/^\((.*)\)$/,"$1"):"";
+    const sym=r.status==="ok"?"✓":r.status==="rev"?"!":"✕";
+    h+=`<div class="item ${r.status==="no"?"ine":(top?"top5":"")}" data-i="${idx}">
+      ${top?'<span class="quick">Quote first</span>':""}
+      <div class="ihead">
+        <label class="pick"><input type="checkbox" class="sel" ${r.status!=="no"?"":"disabled"}></label>
+        <span class="rank">${i}</span>
+        <div class="iname"><b>${esc(c.name)}</b><div class="sub">${c.adm?`<span class="tag">${esc(c.adm)}</span>`:""}${c.coach?`<span class="tag" style="color:var(--warn)">⚠ Coaching note</span>`:""}${via.length?`<span class="via">via ${esc(via.join(", "))}${c.mgas.length>3?` +${c.mgas.length-3}`:""}</span>`:`<span class="via">direct</span>`}</div></div>
+        <div class="ifit"><span class="badge ${r.status==="ok"?"b-ok":r.status==="rev"?"b-rev":"b-no"}">${sym} ${r.status==="ok"?"Eligible":r.status==="rev"?"Review":"Not eligible"}</span><div class="note ${r.status==="no"?"f":""}">${esc(note)}</div></div>
+        <div class="iprem"><div class="pnum">${esc(pbig)}</div>${pct?`<div class="pbar"><i style="width:${pct}%"></i></div>`:""}<small>min premium${prest?" · "+esc(prest):""}</small></div>
+        <div class="icov">${chips(c.cov)}</div>
+        <div class="iact">
+          ${c.online?`<a class="btn ora" href="${url(c.online)}" target="_blank" rel="noopener">⚡ Online rater</a>`:""}
+          ${ne?`<button class="btn sec cpe" title="Copy all ${ne} emails for this carrier and its MGAs">Copy emails (${ne})</button>`:""}
+          <button class="btn sec det">Details ▾</button>
+        </div>
+      </div>
+      <div class="idet hide">
+        <div class="dcols">
+          <div><h4>Why this result</h4>${r.fail.map(x=>`<div class="f">✕ ${esc(x)}</div>`).join("")}${r.warn.map(x=>`<div class="w">! ${esc(x)}</div>`).join("")}${(!r.fail.length&&!r.warn.length)?`<div class="okt">✓ Meets every guideline we can check</div>`:""}
+            ${c.coach?`<h4>Market coaching (Prestige Matrix)</h4><div class="coach">${esc(c.coach).replace(/\n+/g,"<br>")}</div>`:""}${c.gurl?`<div style="margin:8px 0"><a class="btn" href="${esc(c.gurl)}" target="_blank" rel="noopener">📄 Carrier guidelines PDF</a></div>`:""}<h4>Guidelines (Prestige Matrix)</h4><table class="gt">${g.map(([k,v])=>`<tr><td>${k}</td><td>${esc(v)}</td></tr>`).join("")}</table></div>
+          <div><h4>Contacts</h4>${c.direct?contactCard(c.direct,"Direct to "+c.name):""}${c.mgas.map(m=>contactCard(m,"MGA: "+m.name)).join("")}${(!c.direct&&!c.mgas.length)?'<div class="why">No contact on file</div>':""}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+  $("list").innerHTML=h; $("results").classList.remove("hide");
+}$("list")&&0;
+document.addEventListener("click",e=>{
+  const it=e.target.closest(".item"); if(!it) return;
+  if(e.target.closest(".det")){const d=it.querySelector(".idet");d.classList.toggle("hide");e.target.closest(".det").textContent=d.classList.contains("hide")?"Details ▾":"Hide ▴";}
+  if(e.target.closest(".cpe")){const r=result[+it.dataset.i];copy(emailsFor([r]).join("; "));}
+});function selected(){return [...document.querySelectorAll("#list .item")].filter(it=>it.querySelector(".sel")?.checked).map(it=>result[+it.dataset.i]);}
+function emailsFor(rs){const s=new Set();rs.forEach(r=>{mail(r.c.direct&&r.c.direct.emails).forEach(e=>s.add(e));r.c.mgas.forEach(m=>mail(m.emails).forEach(e=>s.add(e)));});return [...s];}
+const copy=async t=>{try{await navigator.clipboard.writeText(t);$("msg").textContent="Copied.";}catch(e){$("msg").textContent="Copy failed - select the text and copy manually.";}};
+
+/* ---------- events ---------- */
+
+$("drop").onclick=()=>$("file").click();
+["dragover","dragenter"].forEach(e=>$("drop").addEventListener(e,ev=>{ev.preventDefault();$("drop").classList.add("over");}));
+["dragleave","drop"].forEach(e=>$("drop").addEventListener(e,ev=>{ev.preventDefault();$("drop").classList.remove("over");}));
+$("drop").addEventListener("drop",ev=>load(ev.dataTransfer.files[0]));
+$("file").onchange=ev=>load(ev.target.files[0]);
+async function load(file){
+  if(!file) return;
+  $("msg").textContent="Reading "+file.name+"...";
+  try{
+    const f=await readFields(await file.arrayBuffer());
+    if(!Object.keys(f).length){$("msg").textContent="No filled-in form fields found. The form is either blank or was saved flat (for example Print to PDF). Use the fillable PDF, or enter the details by hand below.";result=[];$("results").classList.add("hide");profile={};showProfile({name:"",garageState:"",yrs:"",eff:"",target:"",radius:"",dot:"",commodities:"",vehicles:"",drivers:"",nAL:true});return;}
+    RAWACC=acct(f); const p=toProfile(f); showProfile(p);
+    $("msg").textContent=`Read ${Object.keys(f).length} fields from ${file.name}. Check the profile, then press Match carriers.`;
+    runMatch();
+  }catch(e){$("msg").textContent="Could not read the PDF: "+e.message;}
+}
+$("run").onclick=runMatch;
+$("manual").onclick=()=>{profile={};RAWACC=null;showProfile({name:"",garageState:"",yrs:"",eff:"",target:"",radius:"",dot:"",commodities:"",vehicles:"",drivers:"",nAL:true,nPD:false,nCargo:false,nGL:false});$("msg").textContent="Fill in the profile, then press Match carriers.";};
+$("showNo").onchange=render;
+$("selTop").onclick=()=>document.querySelectorAll("#list .item").forEach(tr=>{const s=tr.querySelector(".sel");if(s&&!s.disabled)s.checked=true;});
+$("copyEmails").onclick=()=>{const rs=selected();copy(emailsFor(rs).join("; "));$("msg").textContent=`Copied ${emailsFor(rs).length} emails from ${rs.length} carriers.`;};
+$("copyList").onclick=()=>copy(result.filter(r=>r.status!=="no").map((r,i)=>`${i+1}. ${r.c.name} | min ${r.c.prem||"n/a"} | ${r.status==="ok"?"Eligible":"Review"} | ${emailsFor([r]).join(", ")}`).join("\n"));
+/* ---------- submission email (same format Claude uses for Numan) ---------- */
+function acct(f){
+  const nw=("insured_name" in f)||("vehicle_type_1" in f)||("units_per_client" in f);
+  const g=(a,b)=>String(nw?(f[a]??""):(f[b]??"")).trim();
+  const A={nw,veh:[],drv:[],com:[]};
+  A.name=g("insured_name","company_name"); A.owner=g("owner_name","company_owner_name"); A.dob=g("owner_dob","dob");
+  A.phone=g("phone","phone"); A.cell=nw?"":(f.cell||"");
+  A.mail=(nw?[f.mailing_address,f.mailing_city_state_zip].filter(Boolean).join(", "):[f.mailing_address].filter(Boolean).join(", ")).replace(/,(?=\S)/g,", ");
+  A.garage=nw?[f.garaging_address,f.garaging_city_state_zip].filter(Boolean).join(", "):[f.garage_address,f.city_state_zip].filter(Boolean).join(", ");
+  A.email=g("email","email"); A.dot=g("dot_number","us_dot"); A.mc=g("mc_number","mc_number");
+  A.auth=g("operating_authority","broker_authority"); A.est=g("year_established","year_business_established");
+  A.ops=nw?(f.describe_operations||""):"";
+  A.eff=g("effective_date","effective_date");
+  A.curCarrier=nw?(f.current_carrier||""):""; A.curPrem=nw?"":(f.current_premium||""); A.losses=nw?"":(f.if_insured_losses||"");
+  A.alLimit=nw?f.requested_auto_liability_amt:f["Primary Liability"];
+  A.cargoLimit=nw?f.requested_cargo_amt:f["Cargo Limit"]; A.cargoDed=nw?"":f["Cargo Deductible"];
+  A.radius=nw?f.radius:f["Radius of Operation"];
+  A.eld=g("eld_vendor","eld_provider");
+  A.states=[];for(let i=1;i<=5;i++){const s=nw?f["state_"+i]:f["state_"+i+"_name"];if(s)A.states.push(s);}
+  A.milePct=nw?[]:[["0-50",f.mileage_pct_1_50],["51-200",f.mileage_pct_51_200],["201-500",f.mileage_pct_201_500],["500+",f.mileage_pct_500_unlimited]].filter(x=>x[1]&&num(x[1])>0);
+  for(let i=1;i<=10;i++){
+    const k=(a,b)=>nw?f[a+"_"+i]:f["vehicle_"+i+"_"+b];
+    const t=k("vehicle_type","type"); if(!t&&!k("vehicle_year","year")) continue;
+    A.veh.push({type:t||"",year:k("vehicle_year","year")||"",make:k("vehicle_make","make")||"",model:k("vehicle_model","model")||"",vin:k("vehicle_vin","vin")||"",value:k("vehicle_value","value")||"",ded:nw?(f["vehicle_pd_ded_"+i]||""):(f["vehicle_"+i+"_deductible"]||"")});
+    const dn=nw?f["driver_name_"+i]:f["driver_"+i+"_name"];
+    if(dn){const d=(a,b)=>nw?f[a+"_"+i]:f["driver_"+i+"_"+b];
+      A.drv.push({name:dn,dob:d("driver_dob","dob")||"",lic:(nw?[f["driver_state_"+i],f["driver_dl_number_"+i]].filter(Boolean).join(" "):(f["driver_"+i+"_state_license"]||"")),cdl:nw?(f["driver_cdl_year_"+i]||""):(f["driver_"+i+"_cdl_year"]||""),exp:d("driver_years_exp","years_exp")||"",hire:d("driver_date_hire","date_hire")||"",viol:nw?(f["driver_tickets_accidents_"+i]||""):(f["driver_"+i+"_violations"]||"")});}
+    const cm=nw?f["cargo_commodity_"+i]:f["cargo_"+i+"_commodity"]; if(cm) A.com.push({n:cm,pct:(nw?f["cargo_pct_"+i]:f["cargo_"+i+"_pct_revenue"])||""});
+  }
+  // drivers can outnumber vehicles
+  for(let i=1;i<=10;i++){const dn=nw?f["driver_name_"+i]:f["driver_"+i+"_name"]; if(dn&&!A.drv.find(x=>x.name===dn)){const d=(a,b)=>nw?f[a+"_"+i]:f["driver_"+i+"_"+b];A.drv.push({name:dn,dob:d("driver_dob","dob")||"",lic:(nw?[f["driver_state_"+i],f["driver_dl_number_"+i]].filter(Boolean).join(" "):(f["driver_"+i+"_state_license"]||"")),cdl:nw?(f["driver_cdl_year_"+i]||""):(f["driver_"+i+"_cdl_year"]||""),exp:d("driver_years_exp","years_exp")||"",hire:"",viol:nw?(f["driver_tickets_accidents_"+i]||""):(f["driver_"+i+"_violations"]||"")});}}
+  return A;
+}
+const money=v=>{const n=num(v);return n?"$"+n.toLocaleString("en-US"):(v||"");};
+function buildEmail(P,A,rs){
+  const need=P.need, covNames=[];
+  if(need.AL) covNames.push("Auto Liability"); if(need.Cargo) covNames.push("Motor Truck Cargo"); if(need.PD) covNames.push("Physical Damage"); if(need.GL) covNames.push("General Liability");
+  const onlyCP=!need.AL&&!need.GL&&(need.Cargo||need.PD);
+  const covTxt=onlyCP?covNames.join(" and ")+" only (no liability)":covNames.join(", ");
+  const state=P.state||stateOf(A.garage);
+  const sub=`QUOTE REQUEST – ${A.name||P.name} – DOT#${A.dot||P.dot||"TBD"} - Eff. ${A.eff||P.eff||"TBD"} - Garaging State: ${state||"TBD"} – ${covNames.join(" & ")}`;
+  const power=A.veh.filter(v=>!/trailer/i.test(v.type)), trailers=A.veh.filter(v=>/trailer/i.test(v.type));
+  const vl=v=>`* ${[v.year,v.make,(v.model&&v.model!==v.make&&!v.make.includes(v.model)?v.model:"")].filter(Boolean).join(" ")||v.type} – VIN ${v.vin||"TBD"}${v.value?" – "+money(v.value):""}`;
+  const L=[];
+  L.push("Hello,","",`Please find our submission below. We are requesting a quote for ${covTxt}.`,"");
+  L.push(`Named Insured: ${A.name}`);
+  if(A.owner) L.push(`Owner Name: ${A.owner}`); if(A.dob) L.push(`DOB: ${A.dob}`);
+  if(A.phone) L.push(`Business Phone: ${A.phone}${A.cell?` (Cell: ${A.cell})`:""}`);
+  if(A.mail) L.push(`Mailing Address: ${A.mail}`); if(A.garage) L.push(`Garage Address: ${A.garage}`);
+  if(A.email) L.push(`Email: ${A.email}`);
+  L.push(`US DOT / MC: ${A.dot||"TBD"}${A.mc?" / MC "+A.mc:""}`);
+  L.push(`Operation: ${A.auth||"Trucking For Hire"}${A.est?`, established ${A.est}`:""}`);
+  if(A.com.length) L.push(`Commodity: ${A.com.map(c=>c.n+(c.pct?" "+(/%/.test(c.pct)?c.pct:c.pct+"%"):"")).join(", ")}. Non-hazardous.`);
+  if(A.radius||A.milePct.length) L.push(`Radius: ${A.radius?"Up to "+A.radius+" miles":""}${A.milePct.length?` (${A.milePct.map(m=>m[1]+"% "+m[0]+" miles").join(", ")})`:""}${A.states.length?". Operates in "+A.states.join(", ")+".":""}`);
+  if(A.ops) L.push(`Operations: ${A.ops}`);
+  if(A.eld) L.push(`ELD: ${A.eld}`);
+  L.push("",`Truck & Drivers: ${power.length} power unit${power.length===1?"":"s"}, ${trailers.length} trailer${trailers.length===1?"":"s"}, ${A.drv.length} driver${A.drv.length===1?"":"s"}`,"");
+  L.push("Coverage Requested:");
+  if(need.AL) L.push(`* Auto Liability: ${A.alLimit?money(A.alLimit)+" CSL":"limit TBD"}`);
+  if(need.Cargo) L.push(`* Motor Truck Cargo: ${A.cargoLimit?money(A.cargoLimit)+" limit":"limit TBD"}${A.cargoDed?`, ${money(A.cargoDed)} deductible`:""}`);
+  if(need.PD) L.push(`* Physical Damage: Comprehensive / Collision${power[0]&&power[0].ded?`, ${money(power[0].ded)} deductible`:""}`);
+  if(need.GL) L.push("* General Liability: requested");
+  L.push("");
+  if(power.length){L.push("Vehicles:");power.forEach(v=>L.push(vl(v)));L.push("");}
+  if(trailers.length){L.push("Trailers:");trailers.forEach(v=>L.push(vl(v)));L.push("");}
+  if(A.drv.length){L.push("Drivers Detail:");A.drv.forEach((d,i)=>L.push(`* ${d.name}${i===0&&A.owner&&d.name.toLowerCase()===A.owner.toLowerCase()?" (owner)":""}${d.dob?" – DOB "+d.dob:""}${d.lic?" – "+d.lic:""}${d.exp?" – "+d.exp+" yrs experience":""}${d.cdl&&/\d{4}/.test(d.cdl)?" – CDL "+d.cdl:(d.cdl?" – "+d.cdl:"")}${d.viol?" – "+d.viol:""}`));L.push("");}
+  L.push(`Loss History: ${A.losses&&!/^(yes|no|n\/?a)$/i.test(A.losses.trim())?A.losses:"Loss runs and CAB report attached."}${A.curCarrier?` Current carrier: ${A.curCarrier}.`:""}`,"");
+  L.push("Attached Documents:","* Prestige Intake Form","* MVR","* Loss Runs","* CAB Report","");
+  L.push("We are shopping this account for improved pricing and can provide any additional underwriting information same-day.","","Thank you,");
+  const lab=/^(\* )?([A-Z][^:\u2013\n]{1,40}?):( |$)/;
+  const html="<div style=\"font-family:Calibri,Arial,sans-serif;font-size:11pt\">"+L.map(l=>{if(!l.trim())return "<br>";const e=esc(l).replace(lab,(m,b,name,sp)=>(b||"")+"<b>"+name+":</b>"+sp);return e+"<br>";}).join("")+"</div>";
+  return {sub,body:L.join("\n"),html};
+}
+$("mkEmail").onclick=()=>{
+  let rs=selected();
+  if(!rs.length){document.querySelectorAll("#list .item").forEach(it=>{const s=it.querySelector(".sel");if(s&&!s.disabled)s.checked=true;});rs=selected();}
+  if(!rs.length){alert("No eligible carriers to email. Upload a form and press Match carriers first.");return;}
+  let e;try{e=buildEmail(readProfile(),RAWACC||acct({}),rs);}catch(err){alert("Could not build the email: "+err.message);return;}
+  $("emSub").value=e.sub; $("emBody").innerHTML=e.html;
+  $("emailCard").classList.remove("hide"); $("emailCard").scrollIntoView({behavior:"smooth"});
+};$("cpBody").onclick=async()=>{const el=$("emBody");const html=el.innerHTML,txt=el.innerText;
+  try{await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([txt],{type:"text/plain"})})]);$("msg").textContent="Email body copied with bold headings.";}
+  catch(e){try{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand("copy");s.removeAllRanges();$("msg").textContent="Email body copied.";}catch(e2){$("msg").textContent="Copy failed - select the email text and copy it manually.";}}};$("cpSub").onclick=()=>copy($("emSub").value);
+</script>
+<script>
+(function(){
+  const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+  const norm=s=>String(s||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+  async function unlock(pw){
+    const e=window.ENC, enc=new TextEncoder();
+    const km=await crypto.subtle.importKey("raw",enc.encode(pw),"PBKDF2",false,["deriveKey"]);
+    const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(e.salt),iterations:e.iter,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["decrypt"]);
+    const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:b64(e.iv)},key,b64(e.ct));
+    window.CARRIERS=JSON.parse(new TextDecoder().decode(pt));
+  }
+  function open(){document.getElementById("gate").style.display="none";document.getElementById("app").classList.remove("hide");}
+  async function attempt(pw,auto){
+    const msg=document.getElementById("gateMsg"),btn=document.getElementById("gateBtn");
+    if(!auto){msg.textContent="";btn.disabled=true;btn.textContent="Unlocking...";}
+    try{ await unlock(pw); try{sessionStorage.setItem("pcm",pw);}catch(e){} open(); return true; }
+    catch(e){ if(!auto){msg.textContent=(window.crypto&&crypto.subtle)?"That code is not right. Check it and try again.":"This browser cannot unlock the tool. Use Chrome, Edge or Safari over https.";btn.disabled=false;btn.textContent="Unlock";} return false; }
+  }
+  document.getElementById("gateForm").addEventListener("submit",ev=>{ev.preventDefault();attempt(norm(document.getElementById("gatePw").value),false);});
+  try{const s=sessionStorage.getItem("pcm"); if(s) attempt(s,true);}catch(e){}
+})();
+</script>
+
+</body>
+</html>
