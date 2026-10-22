@@ -245,7 +245,7 @@ function match(c,P){
   const units=power.length||P.vehicles.filter(v=>!/trailer/i.test(v.type)).length;
   // coverage
   const cov=c.cov||"";
-  if(P.need.AL&&!/AL/.test(cov)) fail.push("No Auto Liability");
+  if(!cov){ warn.push("Coverage lines not listed in Matrix"); } else if(P.need.AL&&!/AL/.test(cov)){ const others=[["PD","PD"],["Cargo","Cargo"],["GL","GL"]].filter(([k,t])=>P.need[k]&&new RegExp(t).test(cov)).map(x=>x[0]); if(others.length) warn.push("No liability: writes "+others.join(" + ")+" only. Pair with an AL carrier"); else fail.push("No Auto Liability"); }
   if(P.need.PD&&!/PD/.test(cov)) warn.push("No PD");
   if(P.need.Cargo&&!/Cargo/.test(cov)) warn.push("No Cargo");
   if(P.need.GL&&!/GL/.test(cov)) warn.push("No GL");
